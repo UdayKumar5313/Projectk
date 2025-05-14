@@ -1,35 +1,555 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Generator</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #222; color: #eee; text-align: center; padding-top: 50px; }
-        button { font-size: 16px; padding: 10px 20px; cursor: pointer; }
-        #output { margin-top: 20px; font-size: 20px; color: #0f0; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hacker-Style Password Generator</title>
+  <style>
+    body {
+      background: #121212;
+      color: #e0e0e0;
+      font-family: 'Courier New', Courier, monospace;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #00adb5;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto;
+    }
+    #output {
+      background: #222;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
     <h1>Hacker-Style Password Generator</h1>
-    <button id="generateBtn">Generate Password</button>
+    <button id="generateBtn">Generate Password and Run Features</button>
     <div id="output"></div>
+  </div>
 
-    <script>
-        // A simple password generator function in JavaScript.
-        function generatePassword(length = 16) {
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{};:,.<>/?";
-            let password = "";
-            for (let i = 0; i < length; i++) {
-                password += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return password;
+  <script>
+    // Utility: sleep returns a promise that resolves after ms milliseconds.
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    class AdvancedPasswordGenerator {
+      constructor(passwordLength = 16) {
+        this.passwordLength = passwordLength;
+        this.generatedPassword = this.generateRandomPassword();
+        this.salt = this.generateSalt();
+      }
+
+      // Feature 1: Generate a base random password.
+      generateRandomPassword() {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{};:,.<>/?";
+        let password = "";
+        const cryptoObj = window.crypto || window.msCrypto;
+        const randomValues = new Uint32Array(this.passwordLength);
+        cryptoObj.getRandomValues(randomValues);
+        for (let i = 0; i < this.passwordLength; i++) {
+          password += chars.charAt(randomValues[i] % chars.length);
         }
+        return password;
+      }
 
-        document.getElementById("generateBtn").addEventListener("click", () => {
-            const password = generatePassword();
-            document.getElementById("output").textContent = "Your password: " + password;
-        });
-    </script>
+      // Feature 2: Check password strength (score out of 100).
+      checkStrength(password) {
+        let score = 0;
+        if (password.length >= this.passwordLength) score += 20;
+        if (/[a-z]/.test(password)) score += 20;
+        if (/[A-Z]/.test(password)) score += 20;
+        if (/[0-9]/.test(password)) score += 20;
+        if (/[^A-Za-z0-9]/.test(password)) score += 20;
+        return score;
+      }
+
+      // Feature 3: Compute SHA-256 hash using SubtleCrypto (async).
+      async hashPassword(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      // Feature 4: Encrypt the password using AES-GCM (async, dummy implementation).
+      async encryptPassword(password) {
+        const key = await crypto.subtle.generateKey(
+          { name: "AES-GCM", length: 256 },
+          true,
+          ["encrypt", "decrypt"]
+        );
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const enc = new TextEncoder();
+        const ciphertextBuffer = await crypto.subtle.encrypt(
+          { name: "AES-GCM", iv: iv },
+          key,
+          enc.encode(password)
+        );
+        const ciphertextArray = Array.from(new Uint8Array(ciphertextBuffer));
+        return {
+          iv: Array.from(iv).map(b => b.toString(16).padStart(2, '0')).join(''),
+          ciphertext: ciphertextArray.map(b => b.toString(16).padStart(2, '0')).join('')
+        };
+      }
+
+      // Feature 5: Compute Shannon entropy.
+      computeEntropy(password) {
+        const len = password.length;
+        const freq = {};
+        for (let c of password) {
+          freq[c] = (freq[c] || 0) + 1;
+        }
+        let entropy = 0;
+        for (let char in freq) {
+          const p = freq[char] / len;
+          entropy -= p * Math.log2(p);
+        }
+        return entropy;
+      }
+
+      // Feature 6: Breach detection for common passwords.
+      breachDetection(password) {
+        const common = ["password", "123456", "admin", "qwerty"];
+        return common.includes(password.toLowerCase());
+      }
+
+      // Feature 7: Generate a pseudo TOTP code.
+      generateTOTP() {
+        return Math.floor(Math.random() * 900000 + 100000).toString();
+      }
+
+      // Feature 8: Log event with a timestamp.
+      logEvent(event) {
+        return `${new Date().toISOString()}: ${event}`;
+      }
+
+      // Feature 9: Modify password layers: reverse then swap case.
+      modifyPasswordLayers(password) {
+        return password
+          .split('')
+          .reverse()
+          .map(ch => ch === ch.toUpperCase() ? ch.toLowerCase() : ch.toUpperCase())
+          .join('');
+      }
+
+      // Feature 10: Insert a random special character.
+      addSpecialChar(password) {
+        const special = "!@#$%^&*()-_=+[]{};:,.<>/?";
+        const idx = Math.floor(Math.random() * (password.length + 1));
+        return password.slice(0, idx) + special.charAt(Math.floor(Math.random() * special.length)) + password.slice(idx);
+      }
+
+      // Feature 11: Append a timestamp-based hash.
+      timestampHash(password) {
+        const combined = password + Date.now();
+        let hash = 0;
+        for (let i = 0; i < combined.length; i++) {
+          hash = ((hash << 5) - hash) + combined.charCodeAt(i);
+          hash |= 0;
+        }
+        return Math.abs(hash);
+      }
+
+      // Feature 12: Base64 encode the password.
+      base64Encode(password) {
+        return btoa(password);
+      }
+
+      // Feature 13: Generate a double salted hash (simulated).
+      doubleSaltHash(password) {
+        const salt2 = this.generateSalt();
+        const combined = password + salt2;
+        let hash = 0;
+        for (let i = 0; i < combined.length; i++) {
+          hash = ((hash << 5) - hash) + combined.charCodeAt(i);
+          hash |= 0;
+        }
+        return Math.abs(hash);
+      }
+
+      // Feature 14: Simulate SQL injection test.
+      sqlInjectionTest(password) {
+        const patterns = ["' OR '1'='1", "'; DROP TABLE", "\" OR \"\" = \""];
+        return patterns.some(pattern => password.includes(pattern));
+      }
+
+      // Feature 15: Check for dictionary words.
+      dictionaryCheck(password) {
+        const words = ["hello", "password", "letmein"];
+        return words.some(word => password.toLowerCase().includes(word));
+      }
+
+      // Feature 16: Buffer overflow check: flag if password is very long.
+      bufferOverflowCheck(password) {
+        return password.length > 100;
+      }
+
+      // Feature 17: Leetspeak conversion.
+      leetspeakConversion(password) {
+        const leet = { 'a': '4', 'e': '3', 'i': '1', 'o': '0', 's': '5', 't': '7' };
+        return password.split('').map(ch => leet[ch.toLowerCase()] || ch).join('');
+      }
+
+      // Feature 18: Introduce a random delay (async).
+      async randomDelay() {
+        const delay = Math.random() * 400 + 100; // 100 to 500 ms
+        await sleep(delay);
+        return delay;
+      }
+
+      // Feature 19: PBKDF2 key generation simulation (dummy).
+      pbkdf2Key(password) {
+        let key = 0;
+        const combined = password + this.salt;
+        for (let i = 0; i < combined.length; i++) {
+          key = ((key << 5) - key) + combined.charCodeAt(i);
+          key |= 0;
+        }
+        return Math.abs(key);
+      }
+
+      // Feature 20: Check for repeating sequences.
+      repeatingSequencesCheck(password) {
+        for (let i = 1; i <= Math.floor(password.length / 2); i++) {
+          const sequence = password.substring(0, i);
+          if (password.split(sequence).length - 1 > 1) return true;
+        }
+        return false;
+      }
+
+      // Feature 21: Improve entropy by appending random punctuation.
+      improveEntropy(password) {
+        let extra = "";
+        const punctuation = "!@#$%^&*()-_=+[]{};:,.<>/?";
+        for (let i = 0; i < 4; i++) {
+          extra += punctuation.charAt(Math.floor(Math.random() * punctuation.length));
+        }
+        return password + extra;
+      }
+
+      // Feature 22: Generate a hacker-style tagline.
+      generateTagline() {
+        const taglines = ["Access Granted", "Override Complete", "System Breached", "Encryption Enabled", "Hack the Planet!"];
+        return taglines[Math.floor(Math.random() * taglines.length)];
+      }
+
+      // Feature 23: Simulate network latency measurement.
+      networkLatencySimulation() {
+        return Math.floor(Math.random() * 100) + 50; // 50-150 ms
+      }
+
+      // Feature 24: Debug log message.
+      debugLog(message) {
+        return "DEBUG: " + message;
+      }
+
+      // Feature 25: Leaked password check.
+      leakedPasswordCheck(password) {
+        const leaked = ["123456", "password", "123456789", "qwerty"];
+        return leaked.includes(password);
+      }
+
+      // Feature 26: Hexadecimal conversion.
+      hexConversion(password) {
+        return Array.from(password).map(ch => ch.charCodeAt(0).toString(16)).join('');
+      }
+
+      // Feature 27: Generate a random salt.
+      generateSalt() {
+        const array = new Uint8Array(8);
+        window.crypto.getRandomValues(array);
+        return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      // Feature 28: XOR obfuscation with a random key.
+      xorObfuscation(password) {
+        const key = Math.floor(Math.random() * 256);
+        const obfuscated = Array.from(password)
+          .map(ch => String.fromCharCode(ch.charCodeAt(0) ^ key))
+          .join('');
+        return { obfuscated, key };
+      }
+
+      // Feature 29: Reverse string obfuscation.
+      reverseString(password) {
+        return password.split('').reverse().join('');
+      }
+
+      // Feature 30: Mix two strings by interleaving their characters.
+      mixPasswords(password1, password2) {
+        let mixed = "";
+        for (let i = 0; i < Math.min(password1.length, password2.length); i++) {
+          mixed += password1[i] + password2[i];
+        }
+        return mixed;
+      }
+
+      // Feature 31: Append a random numeric sequence.
+      addNumericSequence(password) {
+        let numSeq = "";
+        for (let i = 0; i < 4; i++) {
+          numSeq += Math.floor(Math.random() * 10);
+        }
+        return password + numSeq;
+      }
+
+      // Feature 32: ASCII shift characters.
+      asciiShift(password) {
+        const shift = Math.floor(Math.random() * 10) + 1;
+        let shifted = "";
+        for (let ch of password) {
+          shifted += String.fromCharCode((ch.charCodeAt(0) + shift) % 128);
+        }
+        return { shifted, shift };
+      }
+
+      // Feature 33: Create an ASCII art representation.
+      asciiArt(password) {
+        return `
++-------------------------------+
+|  Password: ${password}  |
++-------------------------------+`;
+      }
+
+      // Feature 34: Simulate secure deletion.
+      secureDelete() {
+        return "Secure deletion simulated: memory cleared.";
+      }
+
+      // Feature 35: Produce an HMAC-like integrity value (simulated).
+      hmacIntegrity(password) {
+        const key = "secret";
+        let combined = password + key;
+        let hash = 0;
+        for (let i = 0; i < combined.length; i++) {
+          hash = ((hash << 5) - hash) + combined.charCodeAt(i);
+          hash |= 0;
+        }
+        return Math.abs(hash);
+      }
+
+      // Feature 36: Validate against a custom password policy.
+      customPolicyValidation(password) {
+        if (password.length < this.passwordLength) return { valid: false, message: "Password too short" };
+        if (!/[A-Z]/.test(password)) return { valid: false, message: "Missing uppercase letter" };
+        if (!/[0-9]/.test(password)) return { valid: false, message: "Missing digit" };
+        return { valid: true, message: "Password meets custom policy" };
+      }
+
+      // Feature 37: Simulate a firewall scan.
+      firewallScan(password) {
+        return password.toLowerCase().includes("firewall") ? "Alert: 'firewall' pattern detected!" : "No issues detected";
+      }
+
+      // Feature 38: Apply a Caesar cipher.
+      caesarCipher(password, shift = 3) {
+        return password
+          .split('')
+          .map(ch => {
+            if (/[a-zA-Z]/.test(ch)) {
+              const base = ch === ch.toUpperCase() ? 65 : 97;
+              return String.fromCharCode(((ch.charCodeAt(0) - base + shift) % 26) + base);
+            } else {
+              return ch;
+            }
+          })
+          .join('');
+      }
+
+      // Feature 39: Convert the password into a binary string.
+      binaryConversion(password) {
+        return Array.from(password)
+          .map(ch => ch.charCodeAt(0).toString(2).padStart(8, '0'))
+          .join(' ');
+      }
+
+      // Feature 40: Calculate a simple checksum (sum mod 256).
+      checksum(password) {
+        let sum = 0;
+        for (let ch of password) {
+          sum += ch.charCodeAt(0);
+        }
+        return sum % 256;
+      }
+
+      // Feature 41: Simulate a user input delay (async).
+      async userInputDelay() {
+        const delay = Math.random() * 1500 + 500; // 500ms to 2s
+        await sleep(delay);
+        return delay;
+      }
+
+      // Feature 42: Generate a hacker-style log message.
+      hackerLog(message) {
+        return "[HACKER LOG] " + message;
+      }
+
+      // Feature 43: Randomly scramble the characters.
+      scrambleCharacters(password) {
+        const arr = password.split('');
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr.join('');
+      }
+
+      // Feature 44: Create a mirror image string.
+      mirrorString(password) {
+        return password + password.split('').reverse().join('');
+      }
+
+      // Feature 45: Append the current system time.
+      appendSystemTime(password) {
+        return password + Date.now();
+      }
+
+      // Feature 46: ROT13 transformation.
+      rot13Transformation(password) {
+        return password
+          .split('')
+          .map(ch => {
+            const code = ch.charCodeAt(0);
+            if (code >= 65 && code <= 90) {
+              return String.fromCharCode(((code - 65 + 13) % 26) + 65);
+            } else if (code >= 97 && code <= 122) {
+              return String.fromCharCode(((code - 97 + 13) % 26) + 97);
+            } else {
+              return ch;
+            }
+          })
+          .join('');
+      }
+
+      // Feature 47: Code obfuscation (randomize case).
+      codeObfuscation(password) {
+        return password
+          .split('')
+          .map(ch => Math.random() > 0.5 ? ch.toUpperCase() : ch.toLowerCase())
+          .join('');
+      }
+
+      // Feature 48: Generate a digital signature (simulated).
+      digitalSignature(password) {
+        const data = password + "signature";
+        let hash = 0;
+        for (let i = 0; i < data.length; i++) {
+          hash = ((hash << 5) - hash) + data.charCodeAt(i);
+          hash |= 0;
+        }
+        return Math.abs(hash);
+      }
+
+      // Feature 49: Simulate multi-threaded processing (async).
+      async multithreadSimulation(password) {
+        await sleep(100);
+        return "Simulated multi-threading complete";
+      }
+
+      // Feature 50: Secure logging simulation.
+      secureLogging(logMessage) {
+        // In a real system, logs would be sent to a secure log store.
+        return "Logged: " + logMessage;
+      }
+
+      // Run all features sequentially and return a results object (async).
+      async runAllFeatures() {
+        const results = {};
+        const basePassword = this.generatedPassword;
+        results["base_password"] = basePassword;
+        results["strength"] = this.checkStrength(basePassword);
+        results["sha256_hash"] = await this.hashPassword(basePassword);
+        results["encrypted"] = await this.encryptPassword(basePassword);
+        results["entropy"] = this.computeEntropy(basePassword);
+        results["breach_detected"] = this.breachDetection(basePassword);
+        results["totp"] = this.generateTOTP();
+        results["log_event"] = this.logEvent("Password generated");
+        results["modified_layers"] = this.modifyPasswordLayers(basePassword);
+        results["special_char_added"] = this.addSpecialChar(basePassword);
+        results["timestamp_hash"] = this.timestampHash(basePassword);
+        results["base64_encoded"] = this.base64Encode(basePassword);
+        results["double_salt_hash"] = this.doubleSaltHash(basePassword);
+        results["sql_injection"] = this.sqlInjectionTest(basePassword);
+        results["dictionary_check"] = this.dictionaryCheck(basePassword);
+        results["buffer_overflow"] = this.bufferOverflowCheck(basePassword);
+        results["leetspeak"] = this.leetspeakConversion(basePassword);
+        results["random_delay"] = await this.randomDelay();
+        results["pbkdf2_key"] = this.pbkdf2Key(basePassword);
+        results["repeating_sequences"] = this.repeatingSequencesCheck(basePassword);
+        results["improve_entropy"] = this.improveEntropy(basePassword);
+        results["tagline"] = this.generateTagline();
+        results["network_latency"] = this.networkLatencySimulation();
+        results["debug_log"] = this.debugLog("All systems nominal");
+        results["leaked_check"] = this.leakedPasswordCheck(basePassword);
+        results["hex_conversion"] = this.hexConversion(basePassword);
+        results["new_salt"] = this.generateSalt();
+        let { obfuscated, key } = this.xorObfuscation(basePassword);
+        results["xor_obfuscation"] = obfuscated;
+        results["xor_key"] = key;
+        results["reverse_string"] = this.reverseString(basePassword);
+        results["mixed_passwords"] = this.mixPasswords(basePassword, this.reverseString(basePassword));
+        results["numeric_sequence"] = this.addNumericSequence(basePassword);
+        let { shifted, shift } = this.asciiShift(basePassword);
+        results["ascii_shifted"] = shifted;
+        results["shift_value"] = shift;
+        results["ascii_art"] = this.asciiArt(basePassword);
+        results["secure_delete"] = this.secureDelete();
+        results["hmac_integrity"] = this.hmacIntegrity(basePassword);
+        const policy = this.customPolicyValidation(basePassword);
+        results["custom_policy"] = policy.message;
+        results["firewall"] = this.firewallScan(basePassword);
+        results["caesar_cipher"] = this.caesarCipher(basePassword);
+        results["binary_conversion"] = this.binaryConversion(basePassword);
+        results["checksum"] = this.checksum(basePassword);
+        results["input_delay"] = await this.userInputDelay();
+        results["hacker_log"] = this.hackerLog("Password generation complete");
+        results["scrambled"] = this.scrambleCharacters(basePassword);
+        results["mirror_string"] = this.mirrorString(basePassword);
+        results["append_time"] = this.appendSystemTime(basePassword);
+        results["rot13"] = this.rot13Transformation(basePassword);
+        results["code_obfuscation"] = this.codeObfuscation(basePassword);
+        results["digital_signature"] = this.digitalSignature(basePassword);
+        results["multithread"] = await this.multithreadSimulation(basePassword);
+        results["secure_logging"] = this.secureLogging("Executed all 50 features.");
+        return results;
+      }
+    }
+
+    // Function to generate the password and display all feature outputs.
+    async function generateAndDisplayPassword() {
+      const generator = new AdvancedPasswordGenerator(16);
+      const results = await generator.runAllFeatures();
+      let output = "";
+      for (let key in results) {
+        output += key + " : " + JSON.stringify(results[key], null, 2) + "\n\n";
+      }
+      document.getElementById("output").textContent = output;
+    }
+
+    document.getElementById("generateBtn").addEventListener("click", generateAndDisplayPassword);
+  </script>
 </body>
 </html>
