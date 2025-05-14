@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #222; color: #eee; text-align: center; padding-top: 50px; }
+        button { font-size: 16px; padding: 10px 20px; cursor: pointer; }
+        #output { margin-top: 20px; font-size: 20px; color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>Hacker-Style Password Generator</h1>
+    <button id="generateBtn">Generate Password</button>
+    <div id="output"></div>
+
+    <script>
+        // A simple password generator function in JavaScript.
+        function generatePassword(length = 16) {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{};:,.<>/?";
+            let password = "";
+            for (let i = 0; i < length; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return password;
+        }
+
+        document.getElementById("generateBtn").addEventListener("click", () => {
+            const password = generatePassword();
+            document.getElementById("output").textContent = "Your password: " + password;
+        });
+    </script>
+</body>
+</html>
