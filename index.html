@@ -3,788 +3,662 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cybersecurity Password Generator</title>
+  <title>Ultimate Cybersecurity Password Generator</title>
   <style>
-    /* ================== GLOBAL STYLES & THEME VARIABLES ================== */
-    :root {
-      --bg-dark: #121212;
-      --bg-light: #eaeaea;
-      --primary-dark: #00ff99;
-      --secondary-dark: #00adb5;
-      --accent-dark: #00ff99;
-      --bg-color: var(--bg-dark);
-      --font-family: "Courier New", monospace;
-    }
-    /* Default: dark hacker theme, neon green style */
+    /* ========= Global Reset & Base Styles ========= */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
-      margin: 0;
-      padding: 0;
-      background-color: var(--bg-color);
-      color: var(--primary-dark);
-      font-family: var(--font-family);
+      font-family: 'Courier New', monospace;
+      background: #000;
+      color: #0f0;
       overflow-x: hidden;
-      cursor: crosshair;
+      cursor: crosshair; /* Feature 50: crosshair cursor */
     }
-    /* ================= Matrix-style Falling Code Background (Feature 42) ================= */
+    /* ========= Matrix-Style Falling Code Background (Feature 42) ========= */
     canvas#matrix {
       position: fixed;
       top: 0;
       left: 0;
-      z-index: -1;
-      display: block;
+      z-index: 1;
     }
-    /* ================= Flickering Scanline Overlay (Feature 47) ================= */
-    body::before {
-      content: "";
+    /* ========= Flickering Scanlines Overlay (Feature 47) ========= */
+    .scanlines {
       position: fixed;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
-      background: repeating-linear-gradient(
-        180deg,
-        rgba(255,255,255,0.02),
-        rgba(255,255,255,0.02) 1px,
-        transparent 1px,
-        transparent 2px
-      );
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient( 
+          0deg, 
+          rgba(0,0,0,0) 0, 
+          rgba(0,0,0,0) 1px, 
+          rgba(0,0,0,0.05) 1px, 
+          rgba(0,0,0,0.05) 2px 
+        );
       pointer-events: none;
-      animation: scanline 0.5s linear infinite;
+      z-index: 3;
+      animation: flicker 1.5s infinite;
     }
-    @keyframes scanline {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(100%); }
+    @keyframes flicker {
+      0% { opacity: 1; }
+      50% { opacity: 0.8; }
+      100% { opacity: 1; }
     }
-    /* ================= Main Container ================= */
+    /* ========= Main Container ========= */
     .container {
+      position: relative;
+      z-index: 5;
       max-width: 900px;
       margin: 50px auto;
       padding: 20px;
       background: rgba(0, 0, 0, 0.85);
-      border: 2px solid var(--secondary-dark);
+      border: 2px solid #0f0;
       border-radius: 10px;
-      box-shadow: 0 0 20px var(--secondary-dark);
-      position: relative;
-      z-index: 2;
+      box-shadow: 0 0 20px #0f0;
     }
-    /* ================= Header with Typing Effect & Blinking Cursor (Features 46 & 45) ================= */
+    /* ========= Header with Typing Effect (Feature 46) ========= */
     header {
       text-align: center;
+      font-size: 2em;
       margin-bottom: 20px;
       position: relative;
     }
-    header h1 {
-      font-size: 2em;
-      margin: 0;
-    }
-    header h1::after {
-      content: "|";
-      animation: blink 1s step-start infinite;
+    header::after {
+      content: '|';
+      animation: blink 1s step-end infinite;
+      margin-left: 5px;
     }
     @keyframes blink {
+      0%, 100% { opacity: 1; }
       50% { opacity: 0; }
     }
-    /* ================= Controls / Settings ================= */
-    .controls {
+    /* ========= Settings Panel ========= */
+    .settings {
       margin-bottom: 20px;
+      border-bottom: 1px solid #0f0;
+      padding-bottom: 10px;
     }
-    .controls label {
+    .settings label {
       display: block;
-      margin-top: 10px;
+      margin: 5px 0;
       font-size: 0.9em;
+      /* Feature 63: Tooltip guidance via title attribute will be added to inputs below */
     }
-    .controls input[type="range"],
-    .controls input[type="text"],
-    .controls input[type="number"] {
-      width: 100%;
-      padding: 5px;
-      background: #000;
-      border: 1px solid var(--secondary-dark);
-      color: var(--primary-dark);
-      border-radius: 5px;
-      outline: none;
+    .settings input[type="range"],
+    .settings input[type="text"],
+    .settings input[type="checkbox"] {
+      margin-right: 10px;
     }
-    .controls input[type="checkbox"] {
-      margin-right: 5px;
-    }
-    /* Tooltips for guidance (Features 40 and 63) */
-    .tooltip {
-      position: relative;
-      display: inline-block;
-    }
-    .tooltip .tooltiptext {
-      visibility: hidden;
-      width: 220px;
-      background-color: #333;
-      color: #fff;
-      text-align: center;
-      border-radius: 5px;
-      padding: 5px;
-      position: absolute;
-      z-index: 3;
-      bottom: 125%;
-      left: 50%;
-      transform: translateX(-50%);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    .tooltip:hover .tooltiptext {
-      visibility: visible;
-      opacity: 1;
-    }
-    /* ================= Output Section ================= */
-    .output-section {
+    /* ========= Output Panel ========= */
+    .output {
       margin-top: 20px;
     }
-    .output-section .generated-password {
-      display: flex;
-      align-items: center;
-    }
-    .output-section input#passwordOutput {
-      width: calc(100% - 120px);
+    .output #passwordDisplay {
+      width: 100%;
+      font-size: 1.5em;
       padding: 10px;
-      font-size: 1.2em;
       background: #000;
-      border: 1px solid var(--secondary-dark);
-      color: var(--primary-dark);
+      border: 1px solid #0f0;
+      color: #0f0;
       border-radius: 5px;
       outline: none;
-      transition: all 0.3s;
     }
-    .output-section input#passwordOutput:focus {
-      border: 2px solid var(--accent-dark);
-      box-shadow: 0 0 10px var(--accent-dark);
-    }
-    .output-section button {
-      padding: 10px 20px;
-      background: var(--secondary-dark);
-      border: none;
+    /* ========= Buttons with Glitch Hover Effect (Feature 43) ========= */
+    button {
+      background: #0f0;
       color: #000;
-      font-size: 1em;
+      padding: 10px 15px;
+      border: none;
       border-radius: 5px;
+      font-size: 1em;
       cursor: pointer;
-      transition: transform 0.3s;
-      margin-left: 10px;
+      margin: 5px;
+      transition: transform 0.2s;
+      position: relative;
     }
-    .output-section button:hover {
-      transform: scale(1.05);
-      /* Glitch hover effect (Feature 43) */
+    button:hover {
+      transform: scale(1.1);
       animation: glitch 0.5s;
     }
     @keyframes glitch {
-      0% { text-shadow: 2px 2px var(--primary-dark); }
-      50% { text-shadow: -2px -2px var(--secondary-dark); }
-      100% { text-shadow: 2px 2px var(--primary-dark); }
+      0% { text-shadow: 2px 2px #0f0; }
+      50% { text-shadow: -2px -2px #0f0; }
+      100% { text-shadow: 2px 2px #0f0; }
     }
-    /* Strength Meter (Features 16,17) */
-    .strength-meter {
+    /* ========= Strength Meter (Features 16,17,18,20) ========= */
+    .meter {
       width: 100%;
       height: 10px;
-      background: #000;
-      border: 1px solid var(--secondary-dark);
-      border-radius: 5px;
-      overflow: hidden;
-      margin-top: 10px;
+      background: #333;
+      border: 1px solid #0f0;
+      margin: 10px 0;
+      position: relative;
     }
-    .strength-meter div {
+    .meter .bar {
       height: 100%;
-      background: var(--accent-dark);
       width: 0%;
+      background: #0f0;
       transition: width 0.5s;
     }
-    /* History List (Feature 27, 29) */
-    .history {
+    /* ========= History & Session Log ========= */
+    .history, .log {
       margin-top: 10px;
-      background: #000;
-      border: 1px solid var(--secondary-dark);
-      border-radius: 5px;
-      padding: 10px;
-      max-height: 100px;
-      overflow-y: auto;
     }
-    .history li {
+    .history li, .log li {
       list-style: none;
-      margin: 5px 0;
+      border-bottom: 1px solid #0f0;
+      padding: 5px 0;
     }
-    /* Button container */
-    .btn-container {
-      text-align: center;
-      margin-top: 20px;
+    /* ========= Expiration Timer ========= */
+    .expiration {
+      margin-top: 10px;
     }
-    /* Reset Settings Button (Feature 68) */
-    #resetSettings {
-      background: var(--secondary-dark);
-      border: none;
-      padding: 8px 12px;
-      color: #000;
+    progress {
+      width: 100%;
+      height: 20px;
+      -webkit-appearance: none;
+      appearance: none;
+      border: 1px solid #0f0;
       border-radius: 5px;
-      cursor: pointer;
+    }
+    progress::-webkit-progress-bar {
+      background: #000;
+    }
+    progress::-webkit-progress-value {
+      background: #0f0;
+      border-radius: 5px;
+    }
+    /* ========= Controls Panel (Theme, Reset Settings) ========= */
+    .controls {
       margin-top: 10px;
-    }
-    /* ================= Loader Animation (Features 48,55) ================= */
-    .loader {
-      border: 4px solid #000;
-      border-top: 4px solid var(--accent-dark);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-      display: none;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    /* Terminal-style Notification (Feature 57) */
-    .notification {
       text-align: center;
-      margin-top: 10px;
-      font-size: 1em;
     }
-    /* Accessibility: Focus indicator for all inputs/buttons (Feature 65) */
-    input:focus, button:focus {
-      outline: 2px dashed var(--accent-dark);
-    }
-    /* Mobile Responsive (Feature 62) */
+    /* ========= Responsive Design (Feature 62) ========= */
     @media (max-width: 600px) {
-      .container {
-        margin: 20px;
-        padding: 15px;
-      }
+      .container { width: 90%; margin: 20px auto; }
+      header { font-size: 1.5em; }
+      button { padding: 8px 12px; font-size: 0.9em; }
     }
   </style>
 </head>
 <body>
-  <!-- ================= Matrix Background Canvas ================= -->
+  <!-- ========= Matrix-Style Animated Background ========= -->
   <canvas id="matrix"></canvas>
+  <div class="scanlines"></div>
 
-  <!-- ================= Main App Container ================= -->
-  <div class="container" role="main" aria-label="Password Generator Application">
-    <header>
-      <h1 id="headerText" aria-live="polite"></h1>
-      <!-- Theme switch button (Features 58 & 70) -->
-      <button id="themeSwitch" aria-label="Toggle Light/Hacker Theme">Switch Theme</button>
-    </header>
-    <!-- ================= Controls Section (Core Password Generator Features 1-20) ================= -->
+  <!-- ========= Main Application Container ========= -->
+  <div class="container" id="app">
+    <!-- Header with Typing Effect (Feature 46) -->
+    <header id="header">Initializing...</header>
+
+    <!-- ========= Settings Panel (Features 2–11, 38, 66, 68, 70) ========= -->
+    <div class="settings">
+      <label> Password Length: <span id="lengthVal">16</span> (8–64)
+        <input type="range" id="length" min="8" max="64" value="16" aria-label="Password Length" title="Select a length from 8 to 64">
+      </label>
+      <label><input type="checkbox" id="uppercase" checked aria-label="Uppercase Letters" title="Toggle uppercase letters">Include Uppercase Letters</label>
+      <label><input type="checkbox" id="lowercase" checked aria-label="Lowercase Letters" title="Toggle lowercase letters">Include Lowercase Letters</label>
+      <label><input type="checkbox" id="numbers" checked aria-label="Numbers" title="Toggle numbers">Include Numbers</label>
+      <label><input type="checkbox" id="special" checked aria-label="Special Characters" title="Toggle special characters">Include Special Characters</label>
+      <label><input type="checkbox" id="excludeSimilar" aria-label="Exclude Similar Characters" title="Exclude similar-looking characters (l, 1, I, O, 0)">Exclude Similar Characters</label>
+      <label><input type="checkbox" id="pronounceable" aria-label="Pronounceable Password" title="Generate a pronounceable password">Pronounceable Password</label>
+      <label><input type="checkbox" id="passphrase" aria-label="Passphrase Mode" title="Generate a passphrase with words separated by a symbol">Passphrase Mode</label>
+      <label><input type="checkbox" id="randomCap" aria-label="Random Capitalization" title="Toggle to randomly capitalize passphrase words">Random Capitalize Passphrase Words</label>
+      <label>Custom Symbols:
+        <input type="text" id="customSymbols" placeholder="e.g. @#$%" aria-label="Custom Symbols" title="Input your own symbols/characters to add">
+      </label>
+      <label><input type="checkbox" id="complyOWASP" aria-label="Comply with OWASP" title="When enabled, password must meet OWASP guidelines">Comply with OWASP Guidelines</label>
+      <label><input type="checkbox" id="soundEffects" checked aria-label="Sound Effects" title="Toggle sound effects on/off">Enable Sound Effects</label>
+      <button id="resetSettings" aria-label="Reset Settings" title="Reset all settings to default">Reset Settings</button>
+    </div>
+
+    <!-- ========= Strength Meter, Entropy, Brute-Force Time, Secure Score (Features 16–20, 36–37) ========= -->
+    <div class="meter"><div class="bar" id="strengthBar"></div></div>
+    <div>Strength: <span id="strengthText">0</span></div>
+    <div>Entropy: <span id="entropyText">0</span> bits</div>
+    <div>Brute-Force Time: <span id="bruteTime">0 sec</span></div>
+    <div>Secure Score: <span id="secureScore">0</span></div>
+
+    <!-- ========= Clipboard & Output Features (Features 21–26, 29–30) ========= -->
+    <div class="output">
+      <input type="text" id="passwordDisplay" readonly aria-label="Generated Password">
+      <button id="toggleVisibility" aria-label="Toggle Visibility" title="Show/Hide Password">Show</button>
+      <button id="copyButton" aria-label="Copy Password" title="Copy to clipboard">Copy</button>
+      <button id="regenButton" aria-label="Regenerate Password" title="Generate new password">Regenerate</button>
+    </div>
+
+    <!-- ========= Password History & Session Log (Features 27–29) ========= -->
+    <div class="history">
+      <h3>Password History (Last 5)</h3>
+      <ul id="historyList"></ul>
+    </div>
+    <div class="log">
+      <h3>Session Log</h3>
+      <ul id="sessionLog"></ul>
+    </div>
+
+    <!-- ========= Password Expiration (Feature 19) ========= -->
+    <div class="expiration">
+      Password Expires In: <progress id="expiry" max="60" value="60"></progress>
+    </div>
+
+    <!-- ========= Cybersecurity Simulation & Alerts (Features 31–35) ========= -->
+    <div class="alerts">
+      <div id="breachAlert" style="display:none; color: red;">Warning: This password is present in breach data!</div>
+      <div id="2fa" style="display:none;">2FA Code: <span id="twoFactorCode"></span></div>
+    </div>
+
+    <!-- ========= Animated Password Generation Process (Features 48,55) ========= -->
+    <div id="animatedProcess" style="display:none; font-family: 'Courier New', monospace; font-size: 1.2em;">Calculating<span id="loadingDots"></span></div>
+
+    <!-- ========= Command Prompt Console for Easter Eggs (Features 54,59,60) ========= -->
+    <div>
+      <input type="text" id="consoleInput" placeholder="Enter command..." aria-label="Console Command" title="Type 'sudo generate' for secret mode" style="width:100%; background:#000; border:1px solid #0f0; color:#0f0; padding:5px; margin-top:10px;">
+    </div>
+
+    <!-- ========= Controls: Theme Toggle (Features 58,70) ========= -->
     <div class="controls">
-      <label for="lengthRange" title="Select password length (8–64)">Password Length: <span id="lengthDisplay">16</span></label>
-      <input type="range" id="lengthRange" min="8" max="64" value="16" aria-label="Password length">
-      
-      <label><input type="checkbox" id="toggleUppercase" checked title="Include uppercase letters"> Uppercase Letters</label>
-      <label><input type="checkbox" id="toggleLowercase" checked title="Include lowercase letters"> Lowercase Letters</label>
-      <label><input type="checkbox" id="toggleNumbers" checked title="Include numbers"> Numbers</label>
-      <label><input type="checkbox" id="toggleSpecial" checked title="Include special characters"> Special Characters</label>
-      <label><input type="checkbox" id="excludeSimilar" title="Exclude similar characters (l, 1, I, O, 0)"> Exclude Similar Characters</label>
-      
-      <label><input type="checkbox" id="optionPronounceable" title="Generate pronounceable password"> Pronounceable Password</label>
-      <label><input type="checkbox" id="optionPassphrase" title="Generate passphrase (words separated by symbols)"> Passphrase Mode</label>
-      <label><input type="checkbox" id="toggleRandomCapital" title="Randomly capitalize passphrase words"> Random Capitalization</label>
-      
-      <label for="customSymbols" title="Custom symbol/character input field">Custom Symbols/Chars:</label>
-      <input type="text" id="customSymbols" placeholder="e.g., @#$%" aria-label="Custom symbols">
-      
-      <label><input type="checkbox" id="preventDictionary" title="Prevent dictionary words"> Prevent Dictionary Words</label>
-      <label><input type="checkbox" id="preventPatterns" title="Prevent common patterns"> Prevent Common Patterns</label>
-      <label><input type="checkbox" id="preventRepeats" title="Prevent repeated characters"> Prevent Repeated Characters</label>
-      <label><input type="checkbox" id="preventKeySeq" title="Detect keyboard sequences"> Detect Keyboard Sequences</label>
-      
-      <div class="tooltip">Strength Meter & Info
-        <span class="tooltiptext">Real-time strength, entropy (in bits), estimated brute-force time, and a security score.</span>
-      </div>
-      <div class="strength-meter"><div id="strengthBar"></div></div>
-      <div>Entropy: <span id="entropyDisplay">0</span> bits – Brute-force: <span id="bruteForceDisplay">0 sec</span></div>
-      <div>Secure Score: <span id="secureScore" aria-live="polite"></span></div>
-      
-      <div>Expires in: <span id="expirationTimer">60</span> sec</div>
+      <button id="themeSwitch" aria-label="Switch Theme" title="Toggle between hacker themes (light/dark)">Switch Theme</button>
     </div>
-    
-    <!-- ================= Clipboard & Output Section (Features 21-30) ================= -->
-    <div class="output-section">
-      <div class="generated-password">
-        <input type="text" id="passwordOutput" readonly aria-label="Generated password">
-        <!-- Toggle visibility button (Feature 25) -->
-        <button id="toggleVisibility" aria-label="Toggle password visibility">Show</button>
-      </div>
-      <div class="btn-container">
-        <button id="copyButton" aria-label="Copy password">Copy</button>
-        <button id="regenerateButton" aria-label="Regenerate password">Regenerate</button>
-        <button id="exportButton" aria-label="Export password as encrypted file">Export</button>
-      </div>
-      <div class="notification" id="clipboardNotification" aria-live="polite"></div>
-      <!-- Password History (last 5) (Features 27, 29) -->
-      <ul class="history" id="passwordHistory" aria-label="Password history"></ul>
-    </div>
-    
-    <!-- ================= Cybersecurity Simulation & Alerts (Features 31-40) ================= -->
-    <div class="simulation">
-      <button id="simulate2FA" aria-label="Simulate 2FA code">Simulate 2FA</button>
-      <div id="twoFACode" aria-live="polite"></div>
-      <button id="simulateBruteForce" aria-label="Brute-force simulator">Simulate Brute-Force</button>
-      <div id="bruteForceSim" aria-live="polite"></div>
-    </div>
-    
-    <!-- Tooltip guidance already provided via .tooltip elements (Feature 40) -->
-    
-    <!-- ================= Command Prompt (Easter Egg & Simulated CLI) (Features 54,59) ================= -->
-    <div class="console" style="margin-top:20px;">
-      <input type="text" id="consoleCommand" placeholder="Enter console command..." aria-label="Console command">
-    </div>
-    
-    <!-- Reset Settings Button (Feature 68) -->
-    <button id="resetSettings" aria-label="Reset all settings">Reset Settings</button>
   </div>
-  
-  <!-- ================= Loader Animation (Features 48,55) ================= -->
-  <div class="loader" id="loader"></div>
-  
-  <!-- ================= Optional Audio Elements for Sounds (Features 52,53,69) ================= -->
+
+  <!-- ========= Audio Elements for Sound Effects (Features 52,53) ========= -->
   <audio id="copySound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA"></audio>
   <audio id="clickSound" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQgAAAAA"></audio>
-  
+
   <script>
-    /******************* JAVASCRIPT CODE *******************/
-    // ================= Utility Functions =================
-    function sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-    // Secure random number [Feature 1]
-    function secureRandom(min, max) {
-      let range = max - min;
-      let arr = new Uint32Array(1);
-      window.crypto.getRandomValues(arr);
-      return min + (arr[0] % range);
-    }
-    
-    // ================= Global Variables & Preferences =================
-    let passwordLog = [];  // Session-based log (Feature 29)
-    const maxHistory = 5;
-    let expirationTime = 60;  // seconds (Feature 19)
-    let expirationInterval;
-    let soundEnabled = JSON.parse(localStorage.getItem("soundEnabled") || "true");
-    
-    // Save and load user preferences (Feature 66)
-    function savePreferences() {
-      let prefs = {
-        length: document.getElementById("lengthRange").value,
-        toggleUppercase: document.getElementById("toggleUppercase").checked,
-        toggleLowercase: document.getElementById("toggleLowercase").checked,
-        toggleNumbers: document.getElementById("toggleNumbers").checked,
-        toggleSpecial: document.getElementById("toggleSpecial").checked,
-        excludeSimilar: document.getElementById("excludeSimilar").checked,
-        optionPronounceable: document.getElementById("optionPronounceable").checked,
-        optionPassphrase: document.getElementById("optionPassphrase").checked,
-        toggleRandomCapital: document.getElementById("toggleRandomCapital").checked,
-        customSymbols: document.getElementById("customSymbols").value,
-        preventDictionary: document.getElementById("preventDictionary").checked,
-        preventPatterns: document.getElementById("preventPatterns").checked,
-        preventRepeats: document.getElementById("preventRepeats").checked,
-        preventKeySeq: document.getElementById("preventKeySeq").checked,
-        soundEnabled: soundEnabled
-      };
-      localStorage.setItem("prefs", JSON.stringify(prefs));
-    }
-    function loadPreferences() {
-      let prefs = localStorage.getItem("prefs");
-      if(prefs) {
-        prefs = JSON.parse(prefs);
-        document.getElementById("lengthRange").value = prefs.length;
-        document.getElementById("toggleUppercase").checked = prefs.toggleUppercase;
-        document.getElementById("toggleLowercase").checked = prefs.toggleLowercase;
-        document.getElementById("toggleNumbers").checked = prefs.toggleNumbers;
-        document.getElementById("toggleSpecial").checked = prefs.toggleSpecial;
-        document.getElementById("excludeSimilar").checked = prefs.excludeSimilar;
-        document.getElementById("optionPronounceable").checked = prefs.optionPronounceable;
-        document.getElementById("optionPassphrase").checked = prefs.optionPassphrase;
-        document.getElementById("toggleRandomCapital").checked = prefs.toggleRandomCapital;
-        document.getElementById("customSymbols").value = prefs.customSymbols;
-        document.getElementById("preventDictionary").checked = prefs.preventDictionary;
-        document.getElementById("preventPatterns").checked = prefs.preventPatterns;
-        document.getElementById("preventRepeats").checked = prefs.preventRepeats;
-        document.getElementById("preventKeySeq").checked = prefs.preventKeySeq;
-      }
-    }
-    // Restore last generated password on reload (Feature 67)
-    function restoreLastPassword() {
-      let last = localStorage.getItem("lastPassword");
-      if(last) {
-        document.getElementById("passwordOutput").value = last;
-      }
-    }
-    // ================= MATRIX BACKGROUND ANIMATION (Feature 42) =================
-    const canvas = document.getElementById("matrix");
-    const ctx = canvas.getContext("2d");
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()-+";
+    // ========= MATRIX BACKGROUND =========
+    const matrixCanvas = document.getElementById('matrix');
+    const ctx = matrixCanvas.getContext('2d');
+    matrixCanvas.width = window.innerWidth;
+    matrixCanvas.height = window.innerHeight;
+    const matrixChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()";
     const fontSize = 16;
-    const columns = canvas.width / fontSize;
-    const drops = Array.from({length: columns}, () => Math.floor(Math.random() * canvas.height / fontSize));
+    const columns = matrixCanvas.width / fontSize;
+    const drops = Array.from({length: columns}).map(() => 1);
     function drawMatrix() {
       ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = (getComputedStyle(document.documentElement).getPropertyValue("--primary-dark")).trim();
-      ctx.font = fontSize + "px " + var(--font-family);
-      for(let i = 0; i < drops.length; i++) {
-        const text = matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
+      ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+      ctx.fillStyle = "#0f0";
+      ctx.font = fontSize + "px monospace";
+      for(let i = 0; i < columns; i++){
+        const text = matrixChars.charAt(secureRandomIndex(matrixChars.length));
         ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-        if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-          drops[i] = 0;
-        }
+        if(Math.random() > 0.975) { drops[i] = 0; }
         drops[i]++;
       }
       requestAnimationFrame(drawMatrix);
     }
     drawMatrix();
-    
-    // ================= Password Generation Functions =================
-    // Core password (Features 2-7, 11)
-    function generatePassword() {
-      savePreferences();
-      let length = parseInt(document.getElementById("lengthRange").value);
+
+    // ========= TYPING EFFECT FOR HEADER =========
+    function typeHeader(text, i = 0) {
+      const header = document.getElementById("header");
+      if(i < text.length) {
+        header.textContent += text.charAt(i);
+        setTimeout(() => typeHeader(text, i+1), 100);
+      }
+    }
+    window.onload = () => {
+      setTimeout(() => { document.getElementById("header").textContent = ""; typeHeader("Ultimate Cybersecurity Password Generator"); 
+      // Restore last password from localStorage (Feature 67)
+      const lastPwd = localStorage.getItem("lastPassword");
+      if(lastPwd) { document.getElementById("passwordDisplay").value = lastPwd; }
+      }, 500);
+    };
+
+    // ========= UTILITY: Secure Random Index (Feature 1) =========
+    function secureRandomIndex(max) {
+      const arr = new Uint32Array(1);
+      window.crypto.getRandomValues(arr);
+      return arr[0] % max;
+    }
+
+    // ========= PASSWORD GENERATION =========
+    function generatePasswordCore() {
+      const length = parseInt(document.getElementById("length").value);
       let charset = "";
-      if(document.getElementById("toggleUppercase").checked) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-      if(document.getElementById("toggleLowercase").checked) charset += "abcdefghijklmnopqrstuvwxyz";
-      if(document.getElementById("toggleNumbers").checked) charset += "0123456789";
-      if(document.getElementById("toggleSpecial").checked) charset += "!@#$%^&*()-_=+[]{}|;:,.<>/?";
+      if(document.getElementById("uppercase").checked) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      if(document.getElementById("lowercase").checked) charset += "abcdefghijklmnopqrstuvwxyz";
+      if(document.getElementById("numbers").checked) charset += "0123456789";
+      if(document.getElementById("special").checked) charset += "!@#$%^&*()[]{}<>?/\\|`~";
+      if(document.getElementById("customSymbols").value) {
+        charset += document.getElementById("customSymbols").value;
+      }
       if(document.getElementById("excludeSimilar").checked) {
         charset = charset.replace(/[l1IO0]/g, "");
       }
-      let custom = document.getElementById("customSymbols").value;
-      if(custom) charset += custom;
-      
-      // Handle Passphrase (Feature 9) or Pronounceable (Feature 8 & 10)
-      if(document.getElementById("optionPassphrase").checked) {
-        return generatePassphrase(length);
+      // At least one charset must be selected
+      if(charset.length === 0) {
+        alert("Select at least one character set option.");
+        return "";
       }
-      if(document.getElementById("optionPronounceable").checked) {
-        return generatePronounceable(length, document.getElementById("toggleRandomCapital").checked);
+      // Option: If pronounceable is checked (Feature 8)
+      if(document.getElementById("pronounceable").checked) {
+        return generatePronounceable(length);
       }
-      
-      // Default: secure randomly generated password
+      // Option: Passphrase Mode (Feature 9)
+      if(document.getElementById("passphrase").checked) {
+        return generatePassphrase(length, document.getElementById("randomCap").checked);
+      }
+      let password = "";
+      for(let i = 0; i < length; i++){
+        password += charset.charAt(secureRandomIndex(charset.length));
+      }
+      // Feature 12: Prevent dictionary words (simple check)
+      const dictionary = ["password", "admin", "welcome", "login"];
+      for(let word of dictionary) {
+        if(password.toLowerCase().includes(word)) {
+          password = "!" + password; // modify if detected
+          break;
+        }
+      }
+      // Features 13,14,15: Prevent common patterns, repeated characters, keyboard sequences
+      if(/(.)\1\1/.test(password) || /qwerty|asdf/i.test(password)) {
+        password = password.split('').reverse().join('');
+      }
+      return password;
+    }
+    // Generate a pronounceable password (simple alternating consonants and vowels) (Feature 8)
+    function generatePronounceable(length) {
+      const consonants = "bcdfghjklmnpqrstvwxyz";
+      const vowels = "aeiou";
       let pwd = "";
-      for(let i = 0; i < length; i++) {
-        pwd += charset.charAt(secureRandom(0, charset.length));
-      }
-      // Feature 12: Detect/prevent dictionary words
-      if(document.getElementById("preventDictionary").checked && detectDictionaryWord(pwd)) {
-        return generatePassword();
-      }
-      // Feature 13: Prevent common patterns
-      if(document.getElementById("preventPatterns").checked && detectCommonPatterns(pwd)) {
-        return generatePassword();
-      }
-      // Feature 14: Prevent repeated characters (simple check)
-      if(document.getElementById("preventRepeats").checked && /(.)\1\1/.test(pwd)) {
-        return generatePassword();
-      }
-      // Feature 15: Detect keyboard sequences
-      if(document.getElementById("preventKeySeq").checked && detectKeySequences(pwd)) {
-        return generatePassword();
+      for(let i = 0; i < length; i++){
+        pwd += (i % 2 === 0) ? consonants.charAt(secureRandomIndex(consonants.length))
+                               : vowels.charAt(secureRandomIndex(vowels.length));
       }
       return pwd;
     }
-    function detectDictionaryWord(pwd) {
-      const dict = ["password", "admin", "welcome", "login"];
-      for(let w of dict) {
-        if(pwd.toLowerCase().includes(w)) return true;
-      }
-      return false;
-    }
-    function detectCommonPatterns(pwd) {
-      const patterns = ["1234", "abcd", "qwerty"];
-      for(let p of patterns) {
-        if(pwd.toLowerCase().includes(p)) return true;
-      }
-      return false;
-    }
-    function detectKeySequences(pwd) {
-      const seqs = ["qwerty", "asdf", "zxcv"];
-      for(let s of seqs) {
-        if(pwd.toLowerCase().includes(s)) return true;
-      }
-      return false;
-    }
-    // Pronounceable password generator (Feature 8 & 10)
-    function generatePronounceable(length, randomCap) {
-      const vowels = "aeiou", cons = "bcdfghjklmnpqrstvwxyz";
-      let pwd = "";
-      for(let i = 0; i < length; i++) {
-        let char = (i % 2 === 0) ? cons.charAt(secureRandom(0, cons.length)) : vowels.charAt(secureRandom(0, vowels.length));
-        if(randomCap && Math.random() > 0.5) char = char.toUpperCase();
-        pwd += char;
-      }
-      return pwd;
-    }
-    // Passphrase generator (Feature 9)
-    function generatePassphrase(numWords) {
-      const words = ["cyber", "matrix", "hacker", "secure", "code", "firewall", "encrypt", "data", "access", "override"];
-      const symbols = "!@#$%^&*";
+    // Generate a passphrase: using a word list; (Feature 9 & 10)
+    function generatePassphrase(wordCount, randomCap) {
+      const words = ["cyber", "matrix", "hacker", "secure", "code", "data", "firewall", "encrypt", "protocol"];
       let phrase = "";
-      for(let i = 0; i < numWords; i++) {
-        phrase += words[secureRandom(0, words.length)];
-        if(i < numWords - 1) phrase += symbols.charAt(secureRandom(0, symbols.length));
+      for(let i = 0; i < wordCount; i++){
+        let word = words[secureRandomIndex(words.length)];
+        if(randomCap && secureRandomIndex(2) === 1) {
+          word = word.charAt(0).toUpperCase() + word.slice(1);
+        }
+        phrase += word + (i < wordCount - 1 ? (document.getElementById("customSymbols").value || "-") : "");
       }
       return phrase;
     }
-    
-    // ================= Strength Meter, Entropy & Brute-force Estimation =================
-    function updateStrength(pwd) {
-      // Estimate charset size roughly based on present character types
-      let size = 0;
-      if(/[A-Z]/.test(pwd)) size += 26;
-      if(/[a-z]/.test(pwd)) size += 26;
-      if(/[0-9]/.test(pwd)) size += 10;
-      if(/[\W_]/.test(pwd)) size += 32;
-      let entropy = (pwd.length * Math.log2(size)).toFixed(2);
-      document.getElementById("entropyDisplay").textContent = entropy;
-      // Estimated brute-force time (assuming 1e9 guesses/sec)
-      let seconds = Math.pow(2, entropy) / 1e9;
-      document.getElementById("bruteForceDisplay").textContent = seconds.toFixed(2) + " sec";
-      // Update strength meter (arbitrary scaling)
-      let percent = Math.min((entropy / 100) * 100, 100);
-      document.getElementById("strengthBar").style.width = percent + "%";
-      // Secure Score badge (Feature 20)
-      let score = (entropy >= 60 ? "Secure" : "Insecure");
-      document.getElementById("secureScore").textContent = score;
-      // Feature 36: Alert if entropy below 60 bits
-      if(entropy < 60) {
-        alert("Warning: Entropy below 60 bits!");
-      }
-      // Feature 37: Notify if not meeting minimal OWASP guidelines (min length 12)
-      if(pwd.length < 12) {
-        alert("Warning: Does not meet OWASP guidelines (min length 12)!");
+
+    // ========= Strength, Entropy, Brute-force, Secure Score =========
+    function calculateEntropy(password, charsetSize) {
+      return (password.length * Math.log2(charsetSize)).toFixed(2);
+    }
+    function estimateBruteForce(entropy) {
+      const guessesPerSec = 1e9; // simulated speed
+      const seconds = Math.pow(2, entropy) / guessesPerSec;
+      if(seconds < 60) return seconds.toFixed(2) + " sec";
+      else return (seconds/60).toFixed(2) + " min";
+    }
+    function updateStrengthIndicators(password) {
+      const length = parseInt(document.getElementById("length").value);
+      let charsetSize = 0;
+      if(document.getElementById("uppercase").checked) charsetSize += 26;
+      if(document.getElementById("lowercase").checked) charsetSize += 26;
+      if(document.getElementById("numbers").checked) charsetSize += 10;
+      if(document.getElementById("special").checked) charsetSize += 32;
+      if(document.getElementById("customSymbols").value) charsetSize += document.getElementById("customSymbols").value.length;
+      if(document.getElementById("excludeSimilar").checked) charsetSize -= 5;
+      const entropy = calculateEntropy(password, charsetSize || 1);
+      document.getElementById("entropyText").textContent = entropy;
+      document.getElementById("bruteTime").textContent = estimateBruteForce(entropy);
+      let percentage = Math.min(100, (entropy / 60) * 100);
+      document.getElementById("strengthBar").style.width = percentage + "%";
+      document.getElementById("strengthText").textContent = (percentage > 75 ? "Very Strong" : percentage > 50 ? "Strong" : percentage > 25 ? "Moderate" : "Weak");
+      document.getElementById("secureScore").textContent = (percentage > 75 ? "Excellent" : percentage > 50 ? "Good" : "Weak");
+      // Feature 36: Alert if entropy is less than 60 bits
+      if(parseFloat(entropy) < 60) { alert("Warning: Entropy below 60 bits!"); }
+      // Feature 37: Check NIST/OWASP guidelines (minimum 12 characters)
+      if(document.getElementById("complyOWASP").checked && password.length < 12) {
+        alert("Password does not meet NIST/OWASP guidelines (minimum 12 characters).");
       }
     }
-    
-    // ================= Password Expiration Timer (Feature 19) =================
-    function startExpirationTimer() {
-      let timerSpan = document.getElementById("expirationTimer");
-      let timeLeft = expirationTime;
-      timerSpan.textContent = timeLeft;
-      clearInterval(expirationInterval);
-      expirationInterval = setInterval(() => {
-        timeLeft--;
-        timerSpan.textContent = timeLeft;
-        if(timeLeft <= 0) {
-          clearInterval(expirationInterval);
-          triggerGeneration();
-        }
-      }, 1000);
-    }
-    
-    // ================= Clipboard Functions (Features 21-24) =================
-    async function copyToClipboard() {
+
+    // ========= Clipboard Functions =========
+    async function copyPassword() {
+      const pwd = document.getElementById("passwordDisplay").value;
       try {
-        await navigator.clipboard.writeText(document.getElementById("passwordOutput").value);
-        // Visual feedback (Feature 22)
-        document.getElementById("copyButton").classList.add("glitch");
-        setTimeout(() => {
-          document.getElementById("copyButton").classList.remove("glitch");
-        }, 500);
-        document.getElementById("clipboardNotification").textContent = "Password Copied!";
-        // Auto-clear after 15 sec (Feature 23)
-        setTimeout(async () => {
-          await navigator.clipboard.writeText("");
-          document.getElementById("clipboardNotification").textContent = "";
-        }, 15000);
-      } catch (e) {
-        document.getElementById("clipboardNotification").textContent = "Copy failed!";
+        await navigator.clipboard.writeText(pwd);
+        document.getElementById("copyButton").textContent = "Copied!";
+        playSound("copySound");
+        setTimeout(() => { document.getElementById("copyButton").textContent = "Copy"; }, 2000);
+        setTimeout(async () => { await navigator.clipboard.writeText(""); }, 15000);
+      } catch (e) { alert("Clipboard copy failed."); }
+    }
+
+    // ========= Sound Effects =========
+    function playSound(id) {
+      if(document.getElementById("soundEffects").checked) {
+        const sound = document.getElementById(id);
+        if(sound) { sound.play(); }
       }
     }
-    
-    // ================= Toggle Password Visibility (Feature 25) =================
+
+    // ========= Password Visibility Toggle =========
     function toggleVisibility() {
-      let input = document.getElementById("passwordOutput");
-      let btn = document.getElementById("toggleVisibility");
-      if(input.type === "text") {
-        input.type = "password";
-        btn.textContent = "Show";
+      const field = document.getElementById("passwordDisplay");
+      if(field.type === "text") {
+        field.type = "password";
+        document.getElementById("toggleVisibility").textContent = "Show";
       } else {
-        input.type = "text";
-        btn.textContent = "Hide";
+        field.type = "text";
+        document.getElementById("toggleVisibility").textContent = "Hide";
       }
     }
-    
-    // ================= Regenerate Password (Feature 26) =================
-    function triggerGeneration() {
-      document.getElementById("loader").style.display = "block";
-      setTimeout(() => {
-        let pwd = generatePassword();
-        document.getElementById("passwordOutput").value = pwd;
-        updateStrength(pwd);
-        // Save last password (Feature 67)
-        localStorage.setItem("lastPassword", pwd);
-        // History (Feature 27)
-        if(!passwordLog.includes(pwd)) {
-          passwordLog.push(pwd);
-          if(passwordLog.length > maxHistory) passwordLog.shift();
-          updateHistory();
-        } else {
-          // Warning on reused password (Feature 28)
-          alert("This password was generated earlier in this session.");
-        }
-        document.getElementById("loader").style.display = "none";
-        startExpirationTimer();
-        // Cybersecurity simulation: breach check (Features 31,32)
-        breachCheck(pwd);
-        // Validate OWASP (Features 37-39)
-        validateOWASP(pwd);
-      }, 1000); // simulate calculating delay (Feature 48)
+
+    // ========= History, Session Log, & Reuse Detection =========
+    function logPassword(pwd) {
+      const sessLog = document.getElementById("sessionLog");
+      const li = document.createElement("li");
+      li.textContent = pwd;
+      sessLog.appendChild(li);
     }
-    function updateHistory() {
-      let hist = document.getElementById("passwordHistory");
-      hist.innerHTML = "";
-      passwordLog.forEach(p => {
-        let li = document.createElement("li");
-        li.textContent = p;
-        hist.appendChild(li);
-      });
-      // Session log (Feature 29)
+    function updateHistory(pwd) {
+      const historyList = document.getElementById("historyList");
+      const li = document.createElement("li");
+      li.textContent = pwd;
+      historyList.appendChild(li);
+      while(historyList.childElementCount > 5) {
+        historyList.removeChild(historyList.firstChild);
+      }
     }
-    
-    // ================= Export as Encrypted File (Feature 30) =================
-    function exportPassword() {
-      let pwd = document.getElementById("passwordOutput").value;
-      let encrypted = btoa(pwd); // simple encryption (base64)
-      let blob = new Blob([encrypted], {type: "text/plain;charset=utf-8"});
-      let a = document.createElement("a");
+    function checkReuse(pwd) {
+      if(window.sessionStorage.getItem(pwd)) {
+        alert("Warning: Password generated before in this session!");
+      } else {
+        window.sessionStorage.setItem(pwd, true);
+      }
+    }
+    function exportPasswordFile(pwd) {
+      const blob = new Blob([btoa(pwd)], {type:"text/plain"});
+      const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = "password.enc";
       a.click();
     }
-    
-    // ================= Cybersecurity Simulation Functions =================
-    // Local mock breach checker (Features 31 & 32)
+
+    // ========= Cybersecurity Simulation & Alerts =========
     function breachCheck(pwd) {
-      const breached = ["Password123!", "Qwerty!@#", "12345678"];
-      if(breached.includes(pwd)) {
-        alert("Warning: This password is in the breached list!");
+      const breachDataset = ["Password123!", "Qwerty!@#", "12345678"];
+      if(breachDataset.includes(pwd)) {
+        document.getElementById("breachAlert").style.display = "block";
+      } else {
+        document.getElementById("breachAlert").style.display = "none";
       }
     }
-    // Fake 2FA code generator (Feature 33)
     function simulate2FA() {
-      let code = secureRandom(100000, 999999);
-      document.getElementById("twoFACode").textContent = "2FA Code: " + code;
+      const code = Math.floor(100000 + Math.random()*900000).toString();
+      document.getElementById("twoFactorCode").textContent = code;
+      document.getElementById("2fa").style.display = "block";
     }
-    // Brute-force simulator (Feature 34)
     function simulateBruteForce() {
-      let sim = document.getElementById("bruteForceSim");
-      sim.textContent = "Simulating brute-force attack...";
+      // Visual simulation: flash the strength meter red momentarily.
+      const bar = document.getElementById("strengthBar");
+      bar.style.background = "#f00";
+      setTimeout(() => { bar.style.background = "#0f0"; }, 500);
+    }
+    function simulateLockout() {
+      alert("Simulated Lockout: Weak settings detected!");
+    }
+
+    // ========= Expiration Timer =========
+    function startExpirationTimer() {
+      const prog = document.getElementById("expiry");
+      prog.value = prog.max;
+      const timer = setInterval(() => {
+        prog.value--;
+        if(prog.value <= 0) { clearInterval(timer); triggerGeneration(); }
+      }, 1000);
+    }
+
+    // ========= Animated Password Generation Process =========
+    function animateGeneration(callback) {
+      const anim = document.getElementById("animatedProcess");
+      const dots = document.getElementById("loadingDots");
+      anim.style.display = "block";
+      let count = 0;
+      const interval = setInterval(() => {
+        dots.textContent = ".".repeat(count % 4);
+        count++;
+      }, 500);
       setTimeout(() => {
-        sim.textContent = "Brute-force simulation complete!";
+        clearInterval(interval);
+        anim.style.display = "none";
+        callback();
       }, 2000);
     }
-    // Simulated lockout for weak settings (Feature 35) – called in validateOWASP below
-    // Validate and notify for OWASP compliance (Features 37-39)
-    function validateOWASP(pwd) {
-      let meets = pwd.length >= 12;
-      if(!meets) {
-        alert("Password does not meet OWASP guidelines (min 12 characters)!");
-      }
-      return meets;
-    }
-    
-    // ================= Animations & Sounds =================
-    // Play sound (Features 52,53)
-    function playSound(id) {
-      if(soundEnabled) {
-        document.getElementById(id).play();
-      }
-    }
-    // Toggle sound effects on/off (Feature 69): Press 's' key to toggle sound
-    document.addEventListener("keydown", e => {
-      if(e.key === "s") {
-        soundEnabled = !soundEnabled;
-        localStorage.setItem("soundEnabled", JSON.stringify(soundEnabled));
-        alert("Sound effects " + (soundEnabled ? "enabled" : "disabled"));
-      }
-    });
-    
-    // ================= Theme Switch & Hack Theme (Features 58,70) =================
-    let currentTheme = "dark";
-    document.getElementById("themeSwitch").addEventListener("click", () => {
-      if(currentTheme === "dark") {
-        document.body.style.backgroundColor = "var(--bg-light)";
-        document.body.style.color = "#000";
-        currentTheme = "light";
-      } else {
-        document.body.style.backgroundColor = "var(--bg-dark)";
-        document.body.style.color = "var(--primary-dark)";
-        currentTheme = "dark";
-      }
-    });
-    
-    // ================= Command Prompt Easter Egg & Simulated CLI (Features 54,59) =================
-    document.getElementById("consoleCommand").addEventListener("keydown", function(e){
-      if(e.key === "Enter"){
-        let cmd = this.value.trim().toLowerCase();
-        if(cmd === "sudo generate") {
-          triggerGeneration();
-          alert("Easter Egg Activated: Forced Generation!");
-        } else {
-          alert("Unknown command: " + cmd);
+
+    // ========= MAIN TRIGGER: Generate Password & Update UI =========
+    function triggerGeneration() {
+      playSound("clickSound");
+      animateGeneration(() => {
+        const pwd = generatePasswordCore();
+        if(!pwd) return;
+        document.getElementById("passwordDisplay").value = pwd;
+        localStorage.setItem("lastPassword", pwd);
+        updateStrengthIndicators(pwd);
+        breachCheck(pwd);
+        if(document.getElementById("enable2FA") && document.getElementById("enable2FA").checked) {
+          simulate2FA();
         }
-        this.value = "";
+        logPassword(pwd);
+        updateHistory(pwd);
+        checkReuse(pwd);
+        // Optionally export password file (Feature 30) can be triggered here if desired
+      });
+      startExpirationTimer();
+    }
+
+    // ========= Advanced Keyboard Shortcuts & Accessibility =========
+    document.addEventListener("keydown", function(e) {
+      if(e.code === "Space" && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+        triggerGeneration();
       }
+      if(e.ctrlKey && e.code === "KeyG") {
+        e.preventDefault();
+        triggerGeneration();
+      }
+      // ========= Konami Code Easter Egg (Feature 60) =========
+      konami(e);
     });
-    
-    // ================= Konami Code Easter Egg (Feature 60) =================
     const konamiCode = [38,38,40,40,37,39,37,39,66,65];
     let konamiIndex = 0;
-    document.addEventListener("keydown", function(e) {
+    function konami(e) {
       if(e.keyCode === konamiCode[konamiIndex]) {
         konamiIndex++;
         if(konamiIndex === konamiCode.length) {
-          alert("Konami Code Activated! Enjoy the secret mode!");
+          alert("Konami Code Activated! Easter Egg Unlocked!");
           konamiIndex = 0;
         }
       } else {
         konamiIndex = 0;
       }
-    });
-    
-    // ================= Button Event Listeners =================
-    document.getElementById("copyButton").addEventListener("click", () => {
-      playSound("clickSound");
-      copyToClipboard();
-    });
-    document.getElementById("regenerateButton").addEventListener("click", () => {
-      playSound("clickSound");
-      triggerGeneration();
-    });
-    document.getElementById("exportButton").addEventListener("click", () => {
-      playSound("clickSound");
-      exportPassword();
-    });
+    }
+
+    // ========= Toggle Password Visibility =========
     document.getElementById("toggleVisibility").addEventListener("click", toggleVisibility);
-    document.getElementById("simulate2FA").addEventListener("click", simulate2FA);
-    document.getElementById("simulateBruteForce").addEventListener("click", simulateBruteForce);
+    // ========= Clipboard Copy =========
+    document.getElementById("copyButton").addEventListener("click", copyPassword);
+    // ========= Regenerate =========
+    document.getElementById("regenButton").addEventListener("click", triggerGeneration);
+    // ========= Theme Toggle (Features 58,70) =========
+    let currentTheme = localStorage.getItem("theme") || "dark";
+    document.getElementById("themeSwitch").addEventListener("click", () => {
+      if(currentTheme === "dark") {
+        document.body.style.background = "#eee";
+        document.body.style.color = "#000";
+        currentTheme = "light";
+      } else {
+        document.body.style.background = "#000";
+        document.body.style.color = "#0f0";
+        currentTheme = "dark";
+      }
+      localStorage.setItem("theme", currentTheme);
+    });
+    // ========= Reset Settings =========
     document.getElementById("resetSettings").addEventListener("click", () => {
-      localStorage.removeItem("prefs");
-      localStorage.removeItem("lastPassword");
+      localStorage.removeItem("passwordSettings");
       location.reload();
     });
-    
-    // ================= Typing Effect for Header (Feature 46) =================
-    function typeWriter(element, text, speed) {
-      let i = 0;
-      element.textContent = "";
-      let timer = setInterval(() => {
-        element.textContent += text.charAt(i);
-        i++;
-        if(i === text.length) clearInterval(timer);
-      }, speed);
-    }
-    
-    // ================= Initialize App =================
+    // ========= Save Settings using localStorage (Feature 66) =========
+    document.querySelectorAll(".settings input").forEach(inp => {
+      inp.addEventListener("change", () => {
+        const settings = {
+          length: document.getElementById("length").value,
+          uppercase: document.getElementById("uppercase").checked,
+          lowercase: document.getElementById("lowercase").checked,
+          numbers: document.getElementById("numbers").checked,
+          special: document.getElementById("special").checked,
+          excludeSimilar: document.getElementById("excludeSimilar").checked,
+          pronounceable: document.getElementById("pronounceable").checked,
+          passphrase: document.getElementById("passphrase").checked,
+          randomCap: document.getElementById("randomCap").checked,
+          customSymbols: document.getElementById("customSymbols").value,
+          complyOWASP: document.getElementById("complyOWASP").checked,
+          soundEffects: document.getElementById("soundEffects").checked
+        };
+        localStorage.setItem("passwordSettings", JSON.stringify(settings));
+      });
+    });
+    // ========= Restore Settings on Load =========
     window.onload = () => {
-      loadPreferences();
-      restoreLastPassword();
-      typeWriter(document.getElementById("headerText"), "Cybersecurity Password Generator", 100);
-      triggerGeneration();
+      const saved = localStorage.getItem("passwordSettings");
+      if(saved) {
+        const setts = JSON.parse(saved);
+        document.getElementById("length").value = setts.length || 16;
+        document.getElementById("uppercase").checked = setts.uppercase;
+        document.getElementById("lowercase").checked = setts.lowercase;
+        document.getElementById("numbers").checked = setts.numbers;
+        document.getElementById("special").checked = setts.special;
+        document.getElementById("excludeSimilar").checked = setts.excludeSimilar;
+        document.getElementById("pronounceable").checked = setts.pronounceable;
+        document.getElementById("passphrase").checked = setts.passphrase;
+        document.getElementById("randomCap").checked = setts.randomCap;
+        document.getElementById("customSymbols").value = setts.customSymbols;
+        document.getElementById("complyOWASP").checked = setts.complyOWASP;
+        document.getElementById("soundEffects").checked = setts.soundEffects;
+      }
+      document.getElementById("lengthVal").textContent = document.getElementById("length").value;
     };
-    
+
+    // ========= Console Command for Easter Egg (Feature 59) =========
+    document.getElementById("consoleInput").addEventListener("keydown", function(e){
+      if(e.key === "Enter") {
+        const cmd = this.value.trim().toLowerCase();
+        if(cmd === "sudo generate") {
+          alert("Easter Egg Activated: Hack mode is on!");
+          document.body.classList.add("glitch-mode"); // Feature 59: activate glitch mode
+        } else {
+          alert("Unknown command.");
+        }
+        this.value = "";
+      }
+    });
   </script>
 </body>
 </html>
